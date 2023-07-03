@@ -8,7 +8,7 @@ const refreshToken = async () => {
       const response = await axios.post(url, { refresh_token: refreshToken });
       if (response.status === 200 && response.data.token) {
         const newToken = response.data.token;
-        // Actualizar el token en localStorage o en el estado de la aplicación, según tu preferencia.
+        // Actualizar el token en localStorage o en el estado de la aplicación
         localStorage.setItem('token', newToken);
         return newToken;
       }

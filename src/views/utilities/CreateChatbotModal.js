@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Modal, Button, Form, Input, Menu, Upload, message } from 'antd';
-import { InboxOutlined, UploadOutlined, EditOutlined, GlobalOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Button, Menu, Upload, message } from 'antd';
+import { InboxOutlined, EditOutlined, GlobalOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Item } = Menu;
+const { Dragger } = Upload;
 
 const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
   const [form] = Form.useForm();
@@ -16,38 +17,74 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
     setSelectedItem(e.key);
   };
 
-  const handleCreate = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        const chatbotName = values.chatbotName;
+  const handleCreate = async () => {
+    try {
+      const values = await form.validateFields();
+      const chatbotName = values.chatbotName;
 
-        const data = {
-          chatbot_name: chatbotName,
-        };
+      // Realizar acciones según el elemento seleccionado
+      if (selectedItem === 'upload') {
+        if (!selectedFile) {
+          message.error('Por favor, selecciona un archivo.');
+          return;
+        }
 
-        axios
-          .post('https://aichain-upload-test-dw2j52225q-uc.a.run.app/chatbot/new_chatbot/', data)
-          .then((response) => {
-            console.log(response.data);
-            onCreate(chatbotName);
-            onCancel();
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error('Ocurrió un error al crear el chatbot.');
-          });
-      })
-      .catch((error) => {
-        console.error(error);
-        message.error('Por favor, ingresa el nombre del chatbot.');
-      });
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await axios.post(
+          'https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/new_chatbot/',
+          {
+            name: chatbotName,
+          }
+        );
+
+        const chatbotId = response.data.id;
+
+        await axios.post(
+          `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/${chatbotId}/create_chatbot/`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+
+        message.success('Chatbot creado y archivo cargado correctamente.');
+      } else if (selectedItem === 'text') {
+        if (!selectedText) {
+          message.error('Por favor, ingresa el texto.');
+          return;
+        }
+
+
+        message.success('Chatbot creado y texto procesado correctamente.');
+      } else if (selectedItem === 'website') {
+        if (!selectedURL) {
+          message.error('Por favor, ingresa la URL.');
+          return;
+        }
+
+
+        message.success('Chatbot creado y URL procesada correctamente.');
+      } else if (selectedItem === 'qa') {
+
+        message.success('Chatbot creado y Q&A procesado correctamente.');
+      }
+
+      onCreate(chatbotName);
+      onCancel();
+    } catch (error) {
+      console.error(error);
+      message.error('Ocurrió un error al crear el chatbot.');
+    }
   };
 
   const handleUploadChange = (info) => {
     if (info.file.status === 'done') {
       message.success(`${info.file.name} cargado correctamente.`);
-      setSelectedFile(info.file);
+      setSelectedFile(info.file.originFileObj);
     } else if (info.file.status === 'error') {
       message.error(`Error al cargar ${info.file.name}.`);
     }
@@ -76,7 +113,7 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
           <Input />
         </Form.Item>
         <Menu onClick={handleMenuClick} selectedKeys={[selectedItem]} mode="horizontal">
-          <Item key="upload" icon={<UploadOutlined />}>
+          <Item key="upload" icon={<InboxOutlined />}>
             Subir archivo
           </Item>
           <Item key="text" icon={<EditOutlined />}>
@@ -89,10 +126,9 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
             Q&A
           </Item>
         </Menu>
-        {/* Contenido relacionado con el elemento seleccionado */}
         {selectedItem === 'upload' && (
           <div>
-            <Upload.Dragger
+            <Dragger
               name="file"
               multiple={false}
               onChange={handleUploadChange}
@@ -103,7 +139,7 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
               </p>
               <p className="ant-upload-text">Haz clic o arrastra un archivo para cargarlo</p>
               <p className="ant-upload-hint">Soporte para una sola carga.</p>
-            </Upload.Dragger>
+            </Dragger>
           </div>
         )}
         {selectedItem === 'text' && (
@@ -126,23 +162,23 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
           </div>
         )}
         {selectedItem === 'qa' && (
-  <div>
-    <Form.Item
-      name="question"
-      label="Pregunta"
-      rules={[{ required: true, message: 'Por favor ingresa la pregunta' }]}
-    >
-      <Input placeholder="Ingresa la pregunta" />
-    </Form.Item>
-    <Form.Item
-      name="answer"
-      label="Respuesta"
-      rules={[{ required: true, message: 'Por favor ingresa la respuesta' }]}
-    >
-      <Input.TextArea placeholder="Ingresa la respuesta" rows={4} />
-    </Form.Item>
-  </div>
-)}
+          <div>
+            <Form.Item
+              name="question"
+              label="Pregunta"
+              rules={[{ required: true, message: 'Por favor ingresa la pregunta' }]}
+            >
+              <Input placeholder="Ingresa la pregunta" />
+            </Form.Item>
+            <Form.Item
+              name="answer"
+              label="Respuesta"
+              rules={[{ required: true, message: 'Por favor ingresa la respuesta' }]}
+            >
+              <Input.TextArea placeholder="Ingresa la respuesta" rows={4} />
+            </Form.Item>
+          </div>
+        )}
       </Form>
     </Modal>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -10,12 +10,55 @@ import { FaGoogle } from 'react-icons/fa';
 import axios from 'axios';
 
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
+import refreshToken from './RefreshToken';
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const checkTokenExpiration = async () => {
+      const token = localStorage.getItem('token');
+      const storedRefreshToken = localStorage.getItem('refreshToken');
+      
+      if (!token || !storedRefreshToken) {
+        // Redirigir a la página de inicio de sesión si no hay un token o refreshToken almacenados
+        navigate('/');
+        return;
+      }
+
+      try {
+        // Verificar la vigencia del token enviando una solicitud de prueba
+        const testUrl = 'https://users-test-xcdhbgn6qa-uc.a.run.app/users/test';
+        const response = await axios.get(testUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 200) {
+          // El token aún es válido, continuar con la aplicación
+          navigate('/app');
+        }
+      } catch (error) {
+        // El token ha expirado, renovarlo automáticamente
+        try {
+          const newToken = await refreshToken();
+          // Realizar cualquier acción adicional necesaria, como actualizar el estado de la aplicación
+          // con el nuevo token.
+        } catch (error) {
+          console.log('Error al renovar el token:', error);
+          // Redirigir a la página de inicio de sesión si no se puede renovar el token
+          navigate('/login');
+        }
+      }
+    };
+
+  checkTokenExpiration();
+}, [navigate]);
+  
   const handleLogin = async () => {
     try {
       const url = 'https://users-test-xcdhbgn6qa-uc.a.run.app/users/login/';
@@ -27,8 +70,15 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   
       const response = await axios.post(url, loginData);
   
-      if (response.status === 200 && response.data.token) {
+      if (response.status === 200 && response.data.token && response.data.refresh_token) {
         console.log('Inicio de sesión exitoso:', response.data);
+        const token = response.data.token;
+        const refreshToken = response.data.refresh_token;
+        
+        // Almacena el token y el refresh token en localStorage o en el estado de la aplicación, según tu preferencia.
+        localStorage.setItem('token', token);
+        localStorage.setItem('refreshToken', refreshToken);
+        
         const userData = {
           email: email,
         };
@@ -42,7 +92,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
       setError('Ocurrió un error en el inicio de sesión. Inténtalo de nuevo más tarde.');
     }
   };
-    
+      
   return (
     <>
       {title ? (
