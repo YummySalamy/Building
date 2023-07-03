@@ -15,7 +15,7 @@ const columns = [
     key: 'chatbot_name',
     render: (text, record) => {
       if (record.state_deployed === 'INIT' || record.state_deployed === 'error') {
-        return <Link to={`/app/ui/shadow`}>{text}</Link>;
+        return <Link to={`/app/chatbots`}>{text}</Link>;
       } else {
         return text;
       }

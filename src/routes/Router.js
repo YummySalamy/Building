@@ -35,9 +35,9 @@ const Router = [
     children: [
       { path: '/app/dashboard', exact: true, element: <Dashboard /> },
       { path: '/app/sample-page', exact: true, element: <Configuration /> },
-      { path: '/app/icons', exact: true, element: <ManageSources /> },
-      { path: '/app/ui/typography', exact: true, element: <EmbeddingsPage /> },
-      { path: '/app/ui/shadow', exact: true, element: <ChatBot /> },
+      { path: '/app/sources', exact: true, element: <ManageSources /> },
+      { path: '/app/chatbots', exact: true, element: <EmbeddingsPage /> },
+      { path: '/app/chatbot', exact: true, element: <ChatBot /> },
       { path: '/app/ui/filestorage', exact: true, element: <FileStorage /> },
       { path: '/app/profile', exact: true, element: <ProfilePage /> },
       { path: '*', element: <Navigate to="/auth/404" /> },

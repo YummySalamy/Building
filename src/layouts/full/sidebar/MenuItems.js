@@ -29,13 +29,13 @@ const Menuitems = [
     id: uniqueId(),
     title: 'ChatBots',
     icon: IconHierarchy3,
-    href: '/app/ui/typography',
+    href: '/app/chatbots',
   },
   {
     id: uniqueId(),
     title: 'ChatBot',
     icon: IconMessageChatbot,
-    href: '/app/ui/shadow',
+    href: '/app/chatbot',
   },
   {
     navlabel: true,
@@ -45,7 +45,7 @@ const Menuitems = [
     id: uniqueId(),
     title: 'Gestionar recursos',
     icon: IconBrandPrisma,
-    href: '/app/icons',
+    href: '/app/sources',
   },
   {
     id: uniqueId(),
