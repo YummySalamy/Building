@@ -31,24 +31,25 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
 
         const formData = new FormData();
         formData.append('file', selectedFile);
-
-        const response = await axios.post(
+        const token = localStorage.getItem('token');
+        axios.post(
           'https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/new_chatbot/',
           {
             name: chatbotName,
+          },
+          {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
           }
         );
 
-        const chatbotId = response.data.id;
-
         await axios.post(
-          `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/${chatbotId}/create_chatbot/`,
-          formData,
+          `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/`,
           {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          formData,
         );
 
         message.success('Chatbot creado y archivo cargado correctamente.');
@@ -57,8 +58,17 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
           message.error('Por favor, ingresa el texto.');
           return;
         }
-
-
+        const token = localStorage.getItem('token');
+        await axios.post(
+          'https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/new_chatbot/',
+          {
+            name: chatbotName,
+          },
+          {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          }
+        );
         message.success('Chatbot creado y texto procesado correctamente.');
       } else if (selectedItem === 'website') {
         if (!selectedURL) {

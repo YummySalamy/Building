@@ -4,6 +4,7 @@ import { DeleteOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import CreateChatbotModal from './CreateChatbotModal';
+import handleTokenValidation from 'src/views/authentication/auth/handleTokenValidation.js';
 
 const { confirm } = Modal;
 const { Option } = Select;
@@ -61,23 +62,32 @@ const EmbeddingsPage = () => {
   const [filterForm] = Form.useForm();
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterValues, setFilterValues] = useState(null);
+  var refreshTokenAttempts = 0;
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('https://aichain-upload-test-dw2j52225q-uc.a.run.app/document/list/0', {
+      const token = localStorage.getItem('token');
+      const response = await axios.get("https://upload-test-xcdhbgn6qa-uc.a.run.app/document/list/0", {
         params: {
           name_collection: 'Chatbots',
           page: 0,
-        }
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-
+  
       if (response.status === 200) {
+        console.log(`Success: ${response.data}`);
         setData(response.data);
-      } else {
-        console.log('Error:', response.data);
+      } else if (response.status === 401) {
+        console.log('Error111:', response.data);
       }
     } catch (error) {
-      console.log('Error:', error.message);
+      console.log('Error222:', error.message);
+      // Verificar si el error se debe a un problema de token
+        refreshTokenAttempts++;
+        handleTokenValidation(error, () => fetchData(), refreshTokenAttempts);
     }
   };
 
