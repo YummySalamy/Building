@@ -105,7 +105,12 @@ const EmbeddingsPage = () => {
 
   const handleCreateChatbot = async (values) => {
     try {
+      const token = localStorage.getItem('token')
       const response = await axios.post('https://aichain-upload-test-dw2j52225q-uc.a.run.app/chatbot/new_chatbot', {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      {
         chatbot_name: values.chatbotName,
       });
 

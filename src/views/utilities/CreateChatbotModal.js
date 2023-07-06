@@ -22,7 +22,6 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
       const values = await form.validateFields();
       const chatbotName = values.chatbotName;
 
-      // Realizar acciones según el elemento seleccionado
       if (selectedItem === 'upload') {
         if (!selectedFile) {
           message.error('Por favor, selecciona un archivo.');
@@ -31,26 +30,8 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
 
         const formData = new FormData();
         formData.append('file', selectedFile);
-        const token = localStorage.getItem('token');
-        axios.post(
-          'https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/new_chatbot/',
-          {
-            name: chatbotName,
-          },
-          {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          }
-        );
 
-        await axios.post(
-          `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/`,
-          {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          formData,
-        );
+        await createChatbotWithFile(formData);
 
         message.success('Chatbot creado y archivo cargado correctamente.');
       } else if (selectedItem === 'text') {
@@ -58,17 +39,9 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
           message.error('Por favor, ingresa el texto.');
           return;
         }
-        const token = localStorage.getItem('token');
-        await axios.post(
-          'https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/new_chatbot/',
-          {
-            name: chatbotName,
-          },
-          {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          }
-        );
+
+        await createChatbotWithText(selectedText);
+
         message.success('Chatbot creado y texto procesado correctamente.');
       } else if (selectedItem === 'website') {
         if (!selectedURL) {
@@ -76,10 +49,10 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
           return;
         }
 
+        await createChatbotWithWebsite(selectedURL);
 
         message.success('Chatbot creado y URL procesada correctamente.');
       } else if (selectedItem === 'qa') {
-
         message.success('Chatbot creado y Q&A procesado correctamente.');
       }
 
@@ -99,6 +72,69 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
       message.error(`Error al cargar ${info.file.name}.`);
     }
   };
+
+  const createChatbotWithFile = async (formData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = "https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/";
+
+      const headers = {
+        "Authorization": `Bearer ${token}`,
+      };
+
+      await axios.post(url, formData, {
+        headers: headers,
+      });
+    } catch (error) {
+      console.error(error);
+      message.error('Ocurrió un error al cargar el archivo.');
+    }
+  };
+
+  const createChatbotWithText = async (text) => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = "https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/";
+
+      const payload = {
+        chatbot_name: 'pruebasdechatbot',
+        data_chat: text,
+      };
+
+      const headers = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      await axios.post(url, payload, {
+        headers: headers,
+      });
+    } catch (error) {
+      console.error(error);
+      message.error('Ocurrió un error al procesar el texto.');
+    }
+  };
+
+  const createChatbotWithWebsite = async (url) => {
+    try {
+      const token = localStorage.getItem('token');
+      const requestUrl = "https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/";
+  
+      const item = {
+        url: url,
+      };
+  
+      const headers = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+  
+      await axios.post(requestUrl, headers, item);
+    } catch (error) {
+      console.error(error);
+      message.error('Ocurrió un error al procesar la URL.');
+    }
+  };  
 
   return (
     <Modal
@@ -195,3 +231,4 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
 };
 
 export default CreateChatbotModal;
+
