@@ -1,163 +1,227 @@
 import React, { useState, useEffect } from 'react';
-import { QuestionCircleOutlined, WechatOutlined, SettingOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Menu, Input, Slider, List, Avatar, Skeleton, Button } from 'antd';
+import { Table, message, Modal, Button, Form, Input, Select } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import PageContainer from 'src/components/container/PageContainer';
-import DashboardCard from '../../components/shared/DashboardCard';
+import CreateChatbotModal from './CreateChatbotModal';
+import handleTokenValidation from 'src/views/authentication/auth/handleTokenValidation.js';
 
-const items = [
+const { confirm } = Modal;
+const { Option } = Select;
+
+const columns = [
   {
-    label: 'Chat',
-    key: 'chat',
-    icon: <WechatOutlined />,
+    title: 'Nombre de ChatBot',
+    dataIndex: 'chatbot_name',
+    key: 'chatbot_name',
+    render: (text, record) => {
+      if (record.state_deployed === 'INIT' || record.state_deployed === 'error') {
+        return <Link to={`/app/chatbots`}>{text}</Link>;
+      } else {
+        return text;
+      }
+    },
   },
   {
-    label: 'Configuración',
-    key: 'settings',
-    icon: <SettingOutlined />,
+    title: 'Estado',
+    dataIndex: 'state_deployed',
+    key: 'state_deployed',
   },
   {
-    label: 'Q&A',
-    key: 'qa',
-    icon: <QuestionCircleOutlined />,
-  },
-  {
-    label: 'Ver texto',
-    key: 'viewText',
+    title: 'Acción',
+    dataIndex: '',
+    key: 'x',
+    render: (_, record) => (
+      <a onClick={() => showConfirm(record)}>Borrar {<DeleteOutlined />}</a>
+    ),
   },
 ];
 
-const ChatBot = () => {
-  const [current, setCurrent] = useState('chat');
-  const [selectedOption, setSelectedOption] = useState('');
-  const [chatName, setChatName] = useState('');
-  const [chatTemperature, setChatTemperature] = useState(50);
-  const [loading, setLoading] = useState(false);
+const handleDelete = (record) => {
+  // Lógica para borrar un chatbot
+  message.success(`Se ha borrado el chatbot "${record.chatbot_name}".`);
+};
+
+const showConfirm = (record) => {
+  confirm({
+    title: '¿Estás seguro de borrar este chatbot?',
+    content: `Se borrará el chatbot "${record.chatbot_name}".`,
+    okText: 'Borrar',
+    okType: 'danger',
+    cancelText: 'Cancelar',
+    onOk() {
+      handleDelete(record);
+    },
+  });
+};
+
+const EmbeddingsPage = () => {
   const [data, setData] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [filterValues, setFilterValues] = useState(null);
+  var refreshTokenAttempts = 0;
 
-  const onClick = (e) => {
-    setCurrent(e.key);
-    setSelectedOption(e.key);
-  };
-
-  const handleChatNameChange = (e) => {
-    setChatName(e.target.value);
-  };
-
-  const handleTemperatureChange = (value) => {
-    setChatTemperature(value);
-  };
-
-  const loadData = () => {
-    setLoading(true);
-
-    axios
-      .get('https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/list/0', {
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get("https://upload-test-xcdhbgn6qa-uc.a.run.app/document/list/0", {
         params: {
+          name_collection: 'Chatbots',
           page: 0,
-          chatbot_id: '58BR6hwUhWaUqEY4L2Oh',
         },
-      })
-      .then((response) => {
-        const newData = response.data;
-        setData(newData);
-        console.log('Success...');
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      })
-      .finally(() => {
-        setLoading(false);
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-  };
-
-  useEffect(() => {
-    // Simulating initial data loading
-    loadData();
-  }, []);
-
-  const renderContent = () => {
-    if (selectedOption === 'chat') {
-      return (
-        <iframe
-          src="https://www.chatbase.co/chatbot-iframe/0I78hQ3XRvG3uJhMLFD9z"
-          title="ChatBot"
-          frameBorder={0}
-          width="100%"
-          height="650"
-        ></iframe>
-      );
-    } else if (selectedOption === 'settings') {
-      return (
-        <div>
-          <h4>ID de ChatBot: 0I78hQ3XRvG3uJhMLFD9z</h4>
-          <h4>Número de caracteres: 5,124</h4>
-          <Input placeholder="Ingrese el nombre de ChatBot" value={chatName} onChange={handleChatNameChange} />
-          <div style={{ marginTop: '20px' }}>
-            <h4>Temperatura del chat:</h4>
-            <Slider
-              min={0}
-              max={100}
-              value={chatTemperature}
-              onChange={handleTemperatureChange}
-              style={{ width: '200px' }}
-            />
-          </div>
-        </div>
-      );
-    } else if (selectedOption === 'viewText') {
-      return (
-        <div>
-          <Input placeholder="Ingrese el texto" />
-          <Input placeholder="Ingrese el texto" />
-        </div>
-      );
-    } else if (selectedOption === 'qa') {
-      return (
-        <div>
-          <List
-            className="demo-loadmore-list"
-            itemLayout="horizontal"
-            dataSource={data}
-            renderItem={(item) => (
-              <List.Item
-                actions={[
-                  <Button icon={<EditOutlined />} />,
-                  <Button icon={<DeleteOutlined />} />,
-                ]}
-              >
-                <Skeleton avatar title={false} loading={loading} active>
-                  <List.Item.Meta
-                    title={<a href="#">{item.question}</a>}
-                    description={item.answer}
-                  />
-                </Skeleton>
-              </List.Item>
-            )}
-          />
-        </div>
-      );
-    } else {
-      return (
-        <iframe
-          src="https://www.chatbase.co/chatbot-iframe/0I78hQ3XRvG3uJhMLFD9z"
-          title="ChatBot"
-          frameBorder={0}
-          width="100%"
-          height="650"
-        ></iframe>
-      );
+  
+      if (response.status === 200) {
+        console.log(`Success: ${response.data}`);
+        setData(response.data);
+      } else if (response.status === 401) {
+        console.log('Error111:', response.data);
+      }
+    } catch (error) {
+      console.log('Error222:', error.message);
+      // Verificar si el error se debe a un problema de token
+        refreshTokenAttempts++;
+        handleTokenValidation(error, () => fetchData(), refreshTokenAttempts);
     }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleRowClick = (record) => {
+    if (record.state_deployed === 'INIT' || record.state_deployed === 'error') {
+      // setShowUpdateContainer(true);
+    } else {
+      message.warning('No se puede actualizar el chatbot en este estado.');
+    }
+  };
+
+  const handleCreateChatbot = async (values) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.post('https://aichain-upload-test-dw2j52225q-uc.a.run.app/chatbot/new_chatbot', {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      {
+        chatbot_name: values.chatbotName,
+      });
+
+      if (response.status === 200) {
+        message.success('Chatbot creado exitosamente');
+        setShowModal(false);
+        form.resetFields();
+        fetchData();
+      } else {
+        message.error('Ocurrió un error al crear el chatbot');
+        console.log('Error:', response.data);
+      }
+    } catch (error) {
+      message.error('Ocurrió un error al crear el chatbot');
+      console.log('Error:', error.message);
+    }
+  };
+
+  const handleDelete = (record) => {
+    // Lógica para borrar un chatbot
+    message.success(`Se ha borrado el chatbot "${record.chatbot_name}".`);
+  };
+
+  const handleFilterSubmit = (values) => {
+    console.log('Filter Form:', values);
+
+    // Almacenar los valores de filtrado
+    setFilterValues(values);
+
+    // Lógica para filtrar los elementos de la lista según los valores ingresados
+    const filteredData = data.filter((item) => {
+      const nameMatch = item.chatbot_name.toLowerCase().includes(values.chatbotName.toLowerCase());
+      const stateMatch = values.chatbotState ? item.state_deployed === values.chatbotState : true;
+      return nameMatch && stateMatch;
+    });
+
+    setData(filteredData);
+  };
+
+  const handleReloadTable = () => {
+    // Limpiar los valores de filtrado y volver a cargar la tabla completa
+    setFilterValues(null);
+    fetchData();
+  };
+  const toggleFilter = () => {
+    setFilterVisible(!filterVisible);
+  };
+  const isFiltering = filterValues && (filterValues.chatbotName || filterValues.chatbotState);
+
   return (
-    <PageContainer title="AskITbot" description="This is the ChatBot tab">
-      <DashboardCard title={`Nombre de chatbot: ${chatName}`}>
-        <Menu onClick={onClick} selectedKeys={[current]} mode="horizontal" items={items} />
-        {renderContent()}
-      </DashboardCard>
-    </PageContainer>
+    <>
+      <div>
+        <Button type="primary" onClick={() => setShowModal(true)}>
+          +
+        </Button>
+        <CreateChatbotModal visible={showModal} onCancel={() => setShowModal(false)} onCreate={handleCreateChatbot} />
+        <Button onClick={toggleFilter}>Filtrar</Button>
+        {isFiltering && (
+          <Button onClick={handleReloadTable}>
+            Recargar Tabla
+          </Button>
+        )}
+      </div>
+      <Modal
+        visible={filterVisible}
+        title="Filtrar Chatbots"
+        onCancel={toggleFilter}
+        onOk={filterForm.submit}
+      >
+        <Form form={filterForm} onFinish={handleFilterSubmit} id="inputChatbotName">
+          <Form.Item name="chatbotName" label="Nombre del Chatbot">
+            <Input />
+          </Form.Item>
+          <Form.Item name="chatbotState" label="Estado del Chatbot">
+            <Select>
+              <Option value="INIT">INIT</Option>
+              <Option value="LOAD_DATA">LOAD_DATA</Option>
+              <Option value="ERROR">ERROR</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Filtrar
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Table
+        columns={columns}
+        dataSource={data}
+        expandable={{
+          expandedRowRender: (record) => (
+            <div>
+              <p><strong>ID de ChatBot:</strong> {record.chatbot_id}</p>
+              <p><strong>ID de Usuario:</strong> {record.user_id}</p>
+              <p><strong>Estado Activo:</strong> {record.active_state ? 'Sí' : 'No'}</p>
+            </div>
+          ),
+          rowExpandable: (record) => !!record.chatbot_id,
+        }}
+        locale={{
+          emptyText: 'No hay datos disponibles',
+        }}
+        pagination={false}
+        onRow={(record) => ({
+          onClick: () => handleRowClick(record),
+        })}
+        footer={() => `Total de chatbots: ${data.length}`}
+      />
+    </>
   );
 };
 
-export default ChatBot;
+export default EmbeddingsPage;

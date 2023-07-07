@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { QuestionCircleOutlined, WechatOutlined, SettingOutlined } from '@ant-design/icons';
-import { Menu, Input, Slider, List, Avatar, Skeleton, Button } from 'antd';
+import { QuestionCircleOutlined, WechatOutlined, SettingOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Menu, Input, Slider, List, Skeleton, Button, message, Modal, Form } from 'antd';
 import axios from 'axios';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
@@ -34,6 +34,12 @@ const ChatBot = () => {
   const [chatTemperature, setChatTemperature] = useState(50);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [selectedChatbotId, setSelectedChatbotId] = useState('');
+  const [selectedQaId, setSelectedQaId] = useState('');
+  const [updateModalVisible, setUpdateModalVisible] = useState(false);
+  const [updateQuestion, setUpdateQuestion] = useState('');
+  const [updateAnswer, setUpdateAnswer] = useState('');
 
   const onClick = (e) => {
     setCurrent(e.key);
@@ -75,6 +81,90 @@ const ChatBot = () => {
     // Simulating initial data loading
     loadData();
   }, []);
+
+  const handleDelete = (chatbotId, qaId) => {
+    setConfirmModalVisible(true);
+    setSelectedChatbotId(chatbotId);
+    setSelectedQaId(qaId);
+  };
+
+  const handleConfirmDelete = () => {
+    const token = localStorage.getItem('token');
+
+    const url = 'https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/delete';
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    const data = {
+      chatbot_id: selectedChatbotId,
+      qa_id: selectedQaId,
+    };
+
+    axios
+      .delete(url, {
+        headers,
+        data,
+      })
+      .then((response) => {
+        message.success('Q&A eliminado exitosamente');
+        setConfirmModalVisible(false);
+        loadData();
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        message.error('Ocurrió un error al eliminar el Q&A');
+      });
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmModalVisible(false);
+  };
+
+  const handleUpdate = (chatbotId, qaId, question, answer) => {
+    setSelectedChatbotId(chatbotId);
+    setSelectedQaId(qaId);
+    setUpdateQuestion(question);
+    setUpdateAnswer(answer);
+    setUpdateModalVisible(true);
+  };
+
+  const handleCancelUpdate = () => {
+    setUpdateModalVisible(false);
+  };
+
+  const handleUpdateSubmit = () => {
+    const token = localStorage.getItem('token');
+    const url = `https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/update/${selectedQaId}`;
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const data = {
+      question: updateQuestion,
+      answer: updateAnswer,
+    };
+
+    axios
+      .put(url, data, {
+        headers,
+        params: {
+          chatbot_id: selectedChatbotId,
+        },
+      })
+      .then((response) => {
+        message.success('Q&A actualizado exitosamente');
+        setUpdateModalVisible(false);
+        loadData();
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        message.error('Ocurrió un error al actualizar el Q&A');
+      });
+  };
 
   const renderContent = () => {
     if (selectedOption === 'chat') {
@@ -120,14 +210,45 @@ const ChatBot = () => {
             itemLayout="horizontal"
             dataSource={data}
             renderItem={(item) => (
-              <List.Item>
+              <List.Item
+                key={item.qa_id}
+                actions={[
+                  <Button icon={<EditOutlined />} onClick={() => handleUpdate(item.chatbot_id, item.qa_id, item.question, item.answer)} />,
+                  <Button icon={<DeleteOutlined />} onClick={() => handleDelete(item.chatbot_id, item.qa_id)} />,
+                ]}
+              >
                 <Skeleton avatar title={false} loading={loading} active>
-                  <List.Item.Meta title={<a href="#">{item.question}</a>} description={item.answer} />
-                  <div>content</div>
+                  <List.Item.Meta
+                    title={<a href="#">{item.question}</a>}
+                    description={item.answer}
+                  />
                 </Skeleton>
               </List.Item>
             )}
           />
+          <Modal
+            title="¿Eliminar Q&A?"
+            visible={confirmModalVisible}
+            onOk={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+          >
+            <p>¿Estás seguro de que deseas eliminar este Q&A? Esta acción no se puede revertir.</p>
+          </Modal>
+          <Modal
+            title="Actualizar Q&A"
+            visible={updateModalVisible}
+            onOk={handleUpdateSubmit}
+            onCancel={handleCancelUpdate}
+          >
+            <Form layout="vertical">
+              <Form.Item label="Pregunta">
+                <Input value={updateQuestion} onChange={(e) => setUpdateQuestion(e.target.value)} />
+              </Form.Item>
+              <Form.Item label="Respuesta">
+                <Input value={updateAnswer} onChange={(e) => setUpdateAnswer(e.target.value)} />
+              </Form.Item>
+            </Form>
+          </Modal>
         </div>
       );
     } else {
