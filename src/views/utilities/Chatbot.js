@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QuestionCircleOutlined, WechatOutlined, SettingOutlined } from '@ant-design/icons';
 import { Menu, Input, Slider, List, Avatar, Skeleton, Button } from 'antd';
+import axios from 'axios';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
 
@@ -49,17 +50,31 @@ const ChatBot = () => {
 
   const loadData = () => {
     setLoading(true);
-    // Simulating data loading
-    setTimeout(() => {
-      const newData = Array.from({ length: 5 }, (_, index) => ({
-        id: index,
-        name: `Pregunta ${index+1}`,
-        description: `Respuesta #${index+1}`,
-      }));
-      setData(newData);
-      setLoading(false);
-    }, 1500);
+
+    axios
+      .get('https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/list/0', {
+        params: {
+          page: 0,
+          chatbot_id: '58BR6hwUhWaUqEY4L2Oh',
+        },
+      })
+      .then((response) => {
+        const newData = response.data;
+        setData(newData);
+        console.log('Success...');
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
+
+  useEffect(() => {
+    // Simulating initial data loading
+    loadData();
+  }, []);
 
   const renderContent = () => {
     if (selectedOption === 'chat') {
@@ -100,9 +115,6 @@ const ChatBot = () => {
     } else if (selectedOption === 'qa') {
       return (
         <div>
-          <Button onClick={loadData} loading={loading}>
-            Recargar pares de Q&A
-          </Button>
           <List
             className="demo-loadmore-list"
             itemLayout="horizontal"
@@ -110,10 +122,7 @@ const ChatBot = () => {
             renderItem={(item) => (
               <List.Item>
                 <Skeleton avatar title={false} loading={loading} active>
-                  <List.Item.Meta
-                    title={<a href="#">{item.name}</a>}
-                    description={item.description}
-                  />
+                  <List.Item.Meta title={<a href="#">{item.question}</a>} description={item.answer} />
                   <div>content</div>
                 </Skeleton>
               </List.Item>
@@ -145,4 +154,3 @@ const ChatBot = () => {
 };
 
 export default ChatBot;
-

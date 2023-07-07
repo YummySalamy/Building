@@ -6,6 +6,7 @@ const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
 
 const Dashboard = Loadable(lazy(() => import('../views/dashboard/Dashboard')))
+const LandingPage = Loadable(lazy(() => import('../views/landing/LandingPage')))
 const Configuration = Loadable(lazy(() => import('../views/sample-page/ConfigurationPage')))
 const ManageSources = Loadable(lazy(() => import('../views/icons/ManageSourcesPage')))
 const EmbeddingsPage = Loadable(lazy(() => import('../views/utilities/Embeddings')))
@@ -21,7 +22,7 @@ const Router = [
     path: '/',
     element: <BlankLayout />,
     children: [
-      { path: '/', element: <Navigate to="/auth/login" /> },
+      { path: '/', element: <LandingPage /> },
       { path: '/auth', exact: true, element: <Login2 /> },
       { path: '/auth/login', exact: true, element: <Login2 /> },
       { path: '/auth/register', exact: true, element: <Register2 /> },
