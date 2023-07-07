@@ -27,11 +27,11 @@ const items = [
   },
 ];
 
-const ChatBot = () => {
+const ChatBot = ({ selectedChatbot }) => {
   const [current, setCurrent] = useState('chat');
   const [selectedOption, setSelectedOption] = useState('');
-  const [chatName, setChatName] = useState('');
   const [chatTemperature, setChatTemperature] = useState(50);
+  const [chatName, setChatName] = useState(selectedChatbot ? selectedChatbot.chatbot_name : '');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
@@ -40,6 +40,8 @@ const ChatBot = () => {
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [updateQuestion, setUpdateQuestion] = useState('');
   const [updateAnswer, setUpdateAnswer] = useState('');
+  const chatbotIdDisplay = localStorage.getItem('chatbot_id_infodisplay');
+  const chatbotNameDisplay = localStorage.getItem('chatbot_name_infodisplay');
 
   const onClick = (e) => {
     setCurrent(e.key);
@@ -147,14 +149,13 @@ const ChatBot = () => {
       question: updateQuestion,
       answer: updateAnswer,
     };
+    const params = {
+      chatbot_id: selectedChatbotId,
+    };
 
+    console.log(selectedChatbot);
     axios
-      .put(url, data, {
-        headers,
-        params: {
-          chatbot_id: selectedChatbotId,
-        },
-      })
+      .put(url, params, data, headers)
       .then((response) => {
         message.success('Q&A actualizado exitosamente');
         setUpdateModalVisible(false);
@@ -180,9 +181,9 @@ const ChatBot = () => {
     } else if (selectedOption === 'settings') {
       return (
         <div>
-          <h4>ID de ChatBot: 0I78hQ3XRvG3uJhMLFD9z</h4>
+          <h4>ID de ChatBot: {`${chatbotIdDisplay}`}</h4>
           <h4>Número de caracteres: 5,124</h4>
-          <Input placeholder="Ingrese el nombre de ChatBot" value={chatName} onChange={handleChatNameChange} />
+          <Input placeholder="Ingrese el prompt de base" />
           <div style={{ marginTop: '20px' }}>
             <h4>Temperatura del chat:</h4>
             <Slider
@@ -266,7 +267,7 @@ const ChatBot = () => {
 
   return (
     <PageContainer title="AskITbot" description="This is the ChatBot tab">
-      <DashboardCard title={`Nombre de chatbot: ${chatName}`}>
+      <DashboardCard title={`Nombre de chatbot: ${chatbotNameDisplay}`}>
         <Menu onClick={onClick} selectedKeys={[current]} mode="horizontal" items={items} />
         {renderContent()}
       </DashboardCard>

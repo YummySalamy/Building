@@ -62,6 +62,7 @@ const EmbeddingsPage = () => {
   const [filterForm] = Form.useForm();
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterValues, setFilterValues] = useState(null);
+  const [selectedChatbot, setSelectedChatbot] = useState(null);
   var refreshTokenAttempts = 0;
   const navigate = useNavigate();
 
@@ -98,7 +99,10 @@ const EmbeddingsPage = () => {
 
   const handleRowClick = (record) => {
     if (record.state_deployed === 'INIT' || record.state_deployed === 'error') {
-      // setShowUpdateContainer(true);
+      setSelectedChatbot(record);
+      localStorage.setItem('chatbot_id_infodisplay', record.chatbot_id);
+      localStorage.setItem('chatbot_name_infodisplay', record.chatbot_name);
+      navigate(`/app/chatbot`);
     } else {
       message.warning('No se puede actualizar el chatbot en este estado.');
     }
@@ -120,6 +124,13 @@ const EmbeddingsPage = () => {
         setShowModal(false);
         form.resetFields();
         fetchData();
+    
+        // Actualizar el chatbot seleccionado con el nombre ingresado
+        setSelectedChatbot({
+          ...selectedChatbot,
+          chatbot_name: values.chatbotName,
+        });
+        
       } else {
         message.error('Ocurrió un error al crear el chatbot');
         console.log('Error:', response.data);
@@ -130,10 +141,16 @@ const EmbeddingsPage = () => {
     }
   };
 
-  const handleDelete = (record) => {
+  const handleDeleteChatbot = (record) => {
     // Lógica para borrar un chatbot
     message.success(`Se ha borrado el chatbot "${record.chatbot_name}".`);
+  
+    // Si el chatbot borrado es el chatbot seleccionado, limpiar el estado
+    if (selectedChatbot && selectedChatbot.chatbot_id === record.chatbot_id) {
+      setSelectedChatbot(null);
+    }
   };
+  
 
   const handleFilterSubmit = (values) => {
     console.log('Filter Form:', values);
