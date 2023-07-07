@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, message, Modal, Button, Form, Input, Select } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CreateChatbotModal from './CreateChatbotModal';
 import handleTokenValidation from 'src/views/authentication/auth/handleTokenValidation.js';
@@ -63,6 +63,7 @@ const EmbeddingsPage = () => {
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterValues, setFilterValues] = useState(null);
   var refreshTokenAttempts = 0;
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
