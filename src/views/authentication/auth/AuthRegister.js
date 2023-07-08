@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Alert } from '@mui/material';
-import {signup} from './Signup'
-
+import { message, Button } from 'antd'; // Importa el Button de 'antd' en lugar de IconButton
+import { Box, Typography, Alert } from '@mui/material';
+import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import { Stack } from '@mui/system';
+
+import { signup } from './Signup';
 
 const AuthRegister = ({ title, subtitle, subtext }) => {
   const [error, setError] = useState('');
@@ -11,6 +13,7 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async () => {
     if (!name || !email || !password || !phoneNumber) {
@@ -18,15 +21,17 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
     } else {
       try {
         const response = await signup(email, password, name, phoneNumber);
-        console.log(response); // Procesa la respuesta del backend, por ejemplo, muestra un mensaje de éxito o redirecciona a otra página
-        // Realiza acciones adicionales después del registro exitoso, como mostrar un mensaje de éxito o redireccionar a otra página
+        console.log(response);
+        message.success('Usuario creado con éxito, redirigiendo a inicio de sesión.');
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 3000);
       } catch (error) {
-        console.error(error); // Maneja el error, por ejemplo, muestra un mensaje de error o realiza alguna acción apropiada
-        // Realiza acciones adicionales en caso de error, como mostrar un mensaje de error o realizar alguna acción apropiada
+        console.error(error);
+        message.error('Algo salió mal con el registro...');
       }
     }
   };
-  
 
   return (
     <>
@@ -53,17 +58,40 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
           <Typography variant="subtitle1" fontWeight={600} component="label" htmlFor="password" mb="5px" mt="25px">
             Contraseña
           </Typography>
-          <CustomTextField id="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} />
+          <CustomTextField
+            id="password"
+            variant="outlined"
+            fullWidth
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <Button
+                  onClick={() => setShowPassword(!showPassword)}
+                  icon={showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  shape="circle"
+                  size="small"
+                />
+              ),
+            }}
+          />
 
           <Typography variant="subtitle1" fontWeight={600} component="label" htmlFor="phoneNumber" mb="5px" mt="25px">
             Número de Teléfono
           </Typography>
-          <CustomTextField id="phoneNumber" variant="outlined" fullWidth value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+          <CustomTextField
+            id="phoneNumber"
+            variant="outlined"
+            fullWidth
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+          />
         </Stack>
 
         {error && <Alert severity="error">{error}</Alert>}
 
-        <Button color="primary" variant="contained" size="large" fullWidth onClick={handleRegister}>
+        <Button type="primary" size="large" block onClick={handleRegister}>
           Registrarse
         </Button>
       </Box>
