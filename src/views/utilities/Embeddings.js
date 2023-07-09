@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, message, Modal, Button, Form, Input, Select } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate} from 'react-router-dom';
 import axios from 'axios';
 import CreateChatbotModal from './CreateChatbotModal';
 import handleTokenValidation from 'src/views/authentication/auth/handleTokenValidation.js';

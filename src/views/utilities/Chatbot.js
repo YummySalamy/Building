@@ -105,10 +105,7 @@ const ChatBot = ({ selectedChatbot }) => {
     };
 
     axios
-      .delete(url, {
-        headers,
-        data,
-      })
+      .delete(url, data, headers)
       .then((response) => {
         message.success('Q&A eliminado exitosamente');
         setConfirmModalVisible(false);
@@ -116,6 +113,7 @@ const ChatBot = ({ selectedChatbot }) => {
       })
       .catch((error) => {
         console.error('Error:', error);
+        console.log(selectedChatbotId);
         message.error('Ocurrió un error al eliminar el Q&A');
       });
   };
