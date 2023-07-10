@@ -267,10 +267,11 @@ const ChatBot = ({ selectedChatbot }) => {
       return (
         <div>
           <Button
-            type="primary"
+            type="dashed"
             icon={<PlusOutlined />}
             onClick={handleAddModalOpen}
             style={{ marginBottom: '16px' }}
+            block
           >
             Añadir
           </Button>
