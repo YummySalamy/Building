@@ -15,7 +15,7 @@ const columns = [
     dataIndex: 'chatbot_name',
     key: 'chatbot_name',
     render: (text, record) => {
-      if (record.state_deployed === 'INIT' || record.state_deployed === 'error') {
+      if (record.state_deployed === 'INIT' || record.state_deployed === 'error' || record.state_deployed === 'LOAD_DATA' ) {
         return <Link to={`/app/chatbots`}>{text}</Link>;
       } else {
         return text;
@@ -98,7 +98,7 @@ const EmbeddingsPage = () => {
   }, []);
 
   const handleRowClick = (record) => {
-    if (record.state_deployed === 'INIT' || record.state_deployed === 'error') {
+    if (record.state_deployed === 'INIT' || record.state_deployed === 'LOAD_DATA') {
       setSelectedChatbot(record);
       localStorage.setItem('chatbot_id_infodisplay', record.chatbot_id);
       localStorage.setItem('chatbot_name_infodisplay', record.chatbot_name);

@@ -11,7 +11,9 @@ import { Menu, Input, Slider, List, Skeleton, Button, message, Modal, Form } fro
 import axios from 'axios';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
+import handleTokenValidation from '../authentication/auth/handleTokenValidation';
 
+var refreshTokenAttempts = 0;
 const items = [
   {
     label: 'Chat',
@@ -129,12 +131,12 @@ const ChatBot = ({ selectedChatbot }) => {
           console.log('Ocurrió un error al eliminar el documento');
           console.log('Status code:', response.status);
           console.log(response.data);
-          message.error('Ocurrió un error al eliminar el Q&A');
         }
       })
       .catch((error) => {
         console.error('Error:', error);
-        console.log(selectedChatbotId, selectedQaId);
+        refreshTokenAttempts++;
+        handleTokenValidation(error, handleConfirmDelete(), refreshTokenAttempts);
         message.error('Ocurrió un error al eliminar el Q&A');
       });
   };
@@ -183,8 +185,9 @@ const ChatBot = ({ selectedChatbot }) => {
       })
       .catch((error) => {
         console.error('Error:', error);
-        console.log(updateQuestion, updateAnswer, selectedQaId);
         message.error('Ocurrió un error al actualizar el Q&A');
+        refreshTokenAttempts++;
+        handleTokenValidation(error, handleUpdateSubmit(), refreshTokenAttempts);
       });
   };
 
@@ -222,8 +225,9 @@ const ChatBot = ({ selectedChatbot }) => {
       })
       .catch((error) => {
         console.error('Error:', error);
-        console.log(newQuestion, newAnswer);
         message.error('Ocurrió un error al agregar el Q&A');
+        refreshTokenAttempts++;
+        handleTokenValidation(error, handleAddModalSubmit(), refreshTokenAttempts);
       });
   };  
 

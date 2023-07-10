@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import handleTokenValidation from '../authentication/auth/handleTokenValidation';
 import { Modal, Form, Input, Button, Menu, Upload, message } from 'antd';
 import { InboxOutlined, EditOutlined, GlobalOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { UploadFile } from '@mui/icons-material';
 
 const { Item } = Menu;
 const { Dragger } = Upload;
@@ -12,7 +14,7 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedText, setSelectedText] = useState('');
   const [selectedURL, setSelectedURL] = useState('');
-  const [chatbotId, setChatbotId] = useState('');
+  var refreshTokenAttempts = 0;
 
   const handleMenuClick = (e) => {
     setSelectedItem(e.key);
@@ -25,16 +27,18 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
 
       const createdChatbot = await createChatbot(chatbotName);
       if (createdChatbot && createdChatbot.success) {
-        setChatbotId(createdChatbot.data.chatbot_id);
+        localStorage.setItem('chatbotIdForUrl',createdChatbot.data.chatbot_id);
         message.success('Chatbot creado correctamente.');
+        await uploadData();
+        onCancel();
       } else {
         message.error('Ocurrió un error al crear el chatbot.');
       }
-
-      onCancel();
     } catch (error) {
       console.error(error);
       message.error('Ocurrió un error al crear el chatbot.');
+      refreshTokenAttempts++;
+      handleTokenValidation(error, handleCreate(), refreshTokenAttempts);
     }
   };
 
@@ -61,120 +65,52 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
       return response.data;
     } catch (error) {
       console.error(error);
-      message.error('Ocurrió un error al crear el chatbot.');
-      return null;
+      refreshTokenAttempts++;
+      handleTokenValidation(error, createChatbot(), refreshTokenAttempts);
     }
   };
 
-  const uploadFile = async () => {
+  const uploadData = async () => {
     try {
-      if (!selectedFile) {
-        message.error('Por favor, selecciona un archivo.');
-        return;
+      const chatbotIdForUrl = localStorage.getItem('chatbotIdForUrl');
+      const token = localStorage.getItem('token');
+      const url = `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/?chatbot_id=${chatbotIdForUrl}`;
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      if (selectedItem === 'upload' && selectedFile) {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        await axios.post(url, formData, { headers });
+        message.success('Archivo cargado correctamente.');
+      } else if (selectedItem === 'text' && selectedText) {
+        const payload = { data_chat: selectedText };
+        await axios.post(url, payload, { headers });
+        message.success('Texto procesado correctamente.');
+      } else if (selectedItem === 'website' && selectedURL) {
+        const payload = { url: selectedURL };
+        await axios.post(url, payload, { headers });
+        message.success('URL procesada correctamente.');
+      } else if (selectedItem === 'qa') {
+        const values = await form.validateFields(['question', 'answer']);
+        const payload = {
+          question: values.question,
+          answer: values.answer,
+        };
+        await axios.post(url, payload, { headers });
+        message.success('Q&A procesado correctamente.');
+      } else {
+        message.error('Por favor, completa los campos requeridos.');
       }
-
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      const url = `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/?chatbot_id=${chatbotId}`;
-      const token = localStorage.getItem('token');
-
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
-
-      await axios.post(url, formData, { headers });
-
-      message.success('Archivo cargado correctamente.');
     } catch (error) {
       console.error(error);
-      message.error('Ocurrió un error al cargar el archivo.');
+      refreshTokenAttempts++;
+      handleTokenValidation(error, uploadData(), refreshTokenAttempts);
+      message.error('Ocurrió un error al procesar los datos.');
     }
   };
-
-  const uploadText = async () => {
-    try {
-      if (!selectedText) {
-        message.error('Por favor, ingresa el texto.');
-        return;
-      }
-
-      const payload = {
-        data_chat: selectedText,
-      };
-
-      const url = `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/?chatbot_id=${chatbotId}`;
-      const token = localStorage.getItem('token');
-
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      };
-
-      await axios.post(url, payload, { headers });
-
-      message.success('Texto procesado correctamente.');
-    } catch (error) {
-      console.error(error);
-      message.error('Ocurrió un error al procesar el texto.');
-    }
-  };
-
-  const uploadWebsite = async () => {
-    try {
-      if (!selectedURL) {
-        message.error('Por favor, ingresa la URL.');
-        return;
-      }
-
-      const item = {
-        url: selectedURL,
-      };
-
-      const url = `https://upload-test-xcdhbgn6qa-uc.a.run.app/chatbot/create_chatbot/?chatbot_id=${chatbotId}`;
-      const token = localStorage.getItem('token');
-
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      };
-
-      await axios.post(url, item, { headers });
-
-      message.success('URL procesada correctamente.');
-    } catch (error) {
-      console.error(error);
-      message.error('Ocurrió un error al procesar la URL.');
-    }
-  };
-
-  const uploadQA = async () => {
-    try {
-      const url = 'https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/create';
-      const token = localStorage.getItem('token');
-  
-      const values = await form.validateFields();
-      const question = values.question;
-      const answer = values.answer;
-  
-      const payload = {
-        question: question,
-        answer: answer,
-        chatbot_id: chatbotId,
-      };
-  
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
-  
-      await axios.post(url, payload, { headers });
-  
-      message.success('Q&A procesado correctamente.');
-    } catch (error) {
-      console.error(error);
-      message.error('Ocurrió un error al procesar el Q&A.');
-    }
-  };  
 
   return (
     <Modal
@@ -224,11 +160,8 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
                 <InboxOutlined />
               </p>
               <p className="ant-upload-text">Haz clic o arrastra un archivo para cargarlo</p>
-              <p className="ant-upload-hiento">Soporte para una sola carga.</p>
+              <p className="ant-upload-hint">Soporte para una sola carga.</p>
             </Dragger>
-            <Button type="primary" onClick={uploadFile}>
-              Subir archivo
-            </Button>
           </div>
         )}
         {selectedItem === 'text' && (
@@ -238,9 +171,6 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
               rows={4}
               onChange={(e) => setSelectedText(e.target.value)}
             />
-            <Button type="primary" onClick={uploadText}>
-              Procesar texto
-            </Button>
           </div>
         )}
         {selectedItem === 'website' && (
@@ -249,9 +179,6 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
               placeholder="Ingresa la URL"
               onChange={(e) => setSelectedURL(e.target.value)}
             />
-            <Button type="primary" onClick={uploadWebsite}>
-              Procesar URL
-            </Button>
           </div>
         )}
         {selectedItem === 'qa' && (
@@ -270,9 +197,6 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
             >
               <Input.TextArea placeholder="Ingresa la respuesta" rows={4} />
             </Form.Item>
-            <Button type="primary" onClick={uploadQA}>
-              Procesar Q&A
-            </Button>
           </div>
         )}
       </Form>
@@ -281,3 +205,4 @@ const CreateChatbotModal = ({ visible, onCancel, onCreate }) => {
 };
 
 export default CreateChatbotModal;
+
