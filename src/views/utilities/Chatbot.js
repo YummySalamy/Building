@@ -63,7 +63,7 @@ const ChatBot = ({ selectedChatbot }) => {
       .get('https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/list/0', {
         params: {
           page: 0,
-          chatbot_id: '58BR6hwUhWaUqEY4L2Oh',
+          chatbot_id: chatbotIdDisplay,
         },
       })
       .then((response) => {
@@ -92,32 +92,43 @@ const ChatBot = ({ selectedChatbot }) => {
 
   const handleConfirmDelete = () => {
     const token = localStorage.getItem('token');
-
     const url = 'https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/delete';
-
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-
+  
     const data = {
       chatbot_id: selectedChatbotId,
       qa_id: selectedQaId,
     };
-
+  
     axios
-      .delete(url, data, headers)
+      .request({
+        method: 'DELETE',
+        url: url,
+        data: JSON.stringify(data),
+        headers: headers,
+      })
       .then((response) => {
-        message.success('Q&A eliminado exitosamente');
-        setConfirmModalVisible(false);
-        loadData();
+        if (response.status === 200) {
+          console.log(response.data);
+          message.success('Q&A eliminado exitosamente');
+          setConfirmModalVisible(false);
+          loadData();
+        } else {
+          console.log('Ocurrió un error al eliminar el documento');
+          console.log('Status code:', response.status);
+          console.log(response.data);
+          message.error('Ocurrió un error al eliminar el Q&A');
+        }
       })
       .catch((error) => {
         console.error('Error:', error);
-        console.log(selectedChatbotId);
+        console.log(selectedChatbotId, selectedQaId);
         message.error('Ocurrió un error al eliminar el Q&A');
       });
   };
-
+  
   const handleCancelDelete = () => {
     setConfirmModalVisible(false);
   };
@@ -137,33 +148,34 @@ const ChatBot = ({ selectedChatbot }) => {
   const handleUpdateSubmit = () => {
     const token = localStorage.getItem('token');
     const url = `https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/update/${selectedQaId}`;
-
     const headers = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
-
     const data = {
       question: updateQuestion,
       answer: updateAnswer,
     };
     const params = {
-      chatbot_id: selectedChatbotId,
+      chatbot_id: chatbotIdDisplay,
     };
-
-    console.log(selectedChatbot);
-    axios
-      .put(url, params, data, headers)
+  
+    axios.put(url, data, { headers, params })
       .then((response) => {
-        message.success('Q&A actualizado exitosamente');
-        setUpdateModalVisible(false);
-        loadData();
+        if (response.status === 200) {
+          message.success('Q&A actualizado exitosamente');
+          setUpdateModalVisible(false);
+          loadData();
+        } else {
+          message.error(`Error al actualizar el Q&A: ${response.status}`);
+        }
       })
       .catch((error) => {
         console.error('Error:', error);
+        console.log(updateQuestion, updateAnswer, selectedQaId);
         message.error('Ocurrió un error al actualizar el Q&A');
       });
-  };
+  };    
 
   const renderContent = () => {
     if (selectedOption === 'chat') {
