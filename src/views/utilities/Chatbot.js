@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { QuestionCircleOutlined, WechatOutlined, SettingOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  QuestionCircleOutlined,
+  WechatOutlined,
+  SettingOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { Menu, Input, Slider, List, Skeleton, Button, message, Modal, Form } from 'antd';
 import axios from 'axios';
 import PageContainer from 'src/components/container/PageContainer';
@@ -40,6 +47,9 @@ const ChatBot = ({ selectedChatbot }) => {
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [updateQuestion, setUpdateQuestion] = useState('');
   const [updateAnswer, setUpdateAnswer] = useState('');
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newAnswer, setNewAnswer] = useState('');
   const chatbotIdDisplay = localStorage.getItem('chatbot_id_infodisplay');
   const chatbotNameDisplay = localStorage.getItem('chatbot_name_infodisplay');
 
@@ -96,17 +106,17 @@ const ChatBot = ({ selectedChatbot }) => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-  
+
     const data = {
       chatbot_id: selectedChatbotId,
       qa_id: selectedQaId,
     };
-  
+
     axios
       .request({
         method: 'DELETE',
         url: url,
-        data: JSON.stringify(data),
+        data: data,
         headers: headers,
       })
       .then((response) => {
@@ -128,7 +138,7 @@ const ChatBot = ({ selectedChatbot }) => {
         message.error('Ocurrió un error al eliminar el Q&A');
       });
   };
-  
+
   const handleCancelDelete = () => {
     setConfirmModalVisible(false);
   };
@@ -159,8 +169,9 @@ const ChatBot = ({ selectedChatbot }) => {
     const params = {
       chatbot_id: chatbotIdDisplay,
     };
-  
-    axios.put(url, data, { headers, params })
+
+    axios
+      .put(url, data, { headers, params })
       .then((response) => {
         if (response.status === 200) {
           message.success('Q&A actualizado exitosamente');
@@ -175,7 +186,46 @@ const ChatBot = ({ selectedChatbot }) => {
         console.log(updateQuestion, updateAnswer, selectedQaId);
         message.error('Ocurrió un error al actualizar el Q&A');
       });
-  };    
+  };
+
+  const handleAddModalOpen = () => {
+    setIsAddModalVisible(true);
+  };
+
+  const handleAddModalClose = () => {
+    setIsAddModalVisible(false);
+  };
+
+  const handleAddModalSubmit = () => {
+    const token = localStorage.getItem('token');
+    const url = 'https://crud-qa-tests-xcdhbgn6qa-uc.a.run.app/quest_ans/create';
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+    const payload = {
+      question: newQuestion,
+      answer: newAnswer,
+      chatbot_id: chatbotIdDisplay,
+    };
+  
+    axios
+      .post(url, payload, { headers })
+      .then((response) => {
+        if (response.status === 200) {
+          message.success('Q&A agregado exitosamente');
+          setIsAddModalVisible(false);
+          loadData();
+        } else {
+          message.error(`Error al agregar el Q&A: ${response.status}`);
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        console.log(newQuestion, newAnswer);
+        message.error('Ocurrió un error al agregar el Q&A');
+      });
+  };  
 
   const renderContent = () => {
     if (selectedOption === 'chat') {
@@ -216,6 +266,14 @@ const ChatBot = ({ selectedChatbot }) => {
     } else if (selectedOption === 'qa') {
       return (
         <div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAddModalOpen}
+            style={{ marginBottom: '16px' }}
+          >
+            Añadir
+          </Button>
           <List
             className="demo-loadmore-list"
             itemLayout="horizontal"
@@ -257,6 +315,21 @@ const ChatBot = ({ selectedChatbot }) => {
               </Form.Item>
               <Form.Item label="Respuesta">
                 <Input value={updateAnswer} onChange={(e) => setUpdateAnswer(e.target.value)} />
+              </Form.Item>
+            </Form>
+          </Modal>
+          <Modal
+            title="Añadir Q&A"
+            visible={isAddModalVisible}
+            onOk={handleAddModalSubmit}
+            onCancel={handleAddModalClose}
+          >
+            <Form layout="vertical">
+              <Form.Item label="Pregunta">
+                <Input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} />
+              </Form.Item>
+              <Form.Item label="Respuesta">
+                <Input value={newAnswer} onChange={(e) => setNewAnswer(e.target.value)} />
               </Form.Item>
             </Form>
           </Modal>

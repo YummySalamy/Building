@@ -137,6 +137,7 @@ const EmbeddingsPage = () => {
       }
     } catch (error) {
       message.error('Ocurrió un error al crear el chatbot');
+      console.log(values.chatbotName);
       console.log('Error:', error.message);
     }
   };
